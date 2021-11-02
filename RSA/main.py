@@ -101,24 +101,19 @@ class App(QWidget):
 
         self.setLayout(self.h_layout_main)
 
-
-
     @staticmethod
     def generate_pq_values():
         p = Cryptodome.Util.number.getPrime(60)
         q = Cryptodome.Util.number.getPrime(60)
         return p, q
 
-
     @staticmethod
     def calculate_n_value(p, q):
         return p * q
 
-
     @staticmethod
     def calculate_phi_n(p, q):
         return (p - 1) * (q - 1)
-
 
     @staticmethod
     def calculate_e(phi):
@@ -129,11 +124,9 @@ class App(QWidget):
         else:
             print("Something went terribly wrong !!!")
 
-
     @staticmethod
     def calculate_d(e, phi):
         return pow(e, -1, phi)
-
 
     @staticmethod
     def input_to_blocks(input_):
@@ -154,8 +147,7 @@ class App(QWidget):
         # split string by 5
         split_input = []
         for x in range(0, input_len, block_len):
-            split_input.append(input_[x:x+block_len])
-
+            split_input.append(input_[x:x + block_len])
 
         # fill matrix with characters
         list_index_count = 0
@@ -164,14 +156,12 @@ class App(QWidget):
                 ot_blocks[list_index_count].append(character)
             list_index_count += 1
 
-
         # print(f"ot_blocks --> {ot_blocks}")
         # print(f"split string --> {split_input}")
         # print(f"matrix n --> {matrix_n}")
         # print(f"ot_blocks --> {ot_blocks}")
 
         return ot_blocks, matrix_n
-
 
     @staticmethod
     def characters_to_numbers(ot_blocks, matrix_n):
@@ -189,7 +179,6 @@ class App(QWidget):
 
         return ot_blocks_numbers
 
-
     @staticmethod
     def numbers_to_binary(ot_blocks_numbers, matrix_n):
         # create matrix
@@ -206,7 +195,6 @@ class App(QWidget):
 
         return ot_blocks_binary
 
-
     @staticmethod
     def binary_blocks_to_binary_string(ot_blocks_binary):
         binary_string = ""
@@ -217,12 +205,12 @@ class App(QWidget):
 
         return binary_string
 
-
     def encrypt(self, binary_string):
         _, _, n, _, e, _ = self.get_all_values()  # p q n phi e d
         ot_int = int(binary_string, 2)
         ct = pow(ot_int, e, n)
         return ct
+
 
 
     def get_all_values(self):
@@ -241,7 +229,6 @@ class App(QWidget):
 
         return p, q, n, phi, e, d
 
-
     def generate_values_button_clicked(self):
         print("generate values button clicked")
 
@@ -252,7 +239,6 @@ class App(QWidget):
         e = self.calculate_e(phi)
         d = self.calculate_d(e, phi)
 
-
         # fill line edits with values
         self.p_lineEdit.setText(str(p))
         self.q_lineEdit.setText(str(q))
@@ -261,11 +247,9 @@ class App(QWidget):
         self.e_lineEdit.setText(str(e))
         self.d_lineEdit.setText(str(d))
 
-
     def enter_values_button_clicked(self):
         print("enter values button clicked")
         pass
-
 
     def load_values_button_clicked(self):
         print("load values button clicked")
@@ -279,7 +263,6 @@ class App(QWidget):
                     data = f.readline()
 
             data = data.split(",")
-            print(data)
             p = int(data[0])
             q = int(data[1])
             n = int(data[2])
@@ -297,14 +280,8 @@ class App(QWidget):
         except:
             self.error_message("Unable to load file!", "Warning")
 
-
-
-
-
     def save_values_button_clicked(self):
         print("save values button clicked")
-
-
 
         try:
             p, q, n, phi, e, d = self.get_all_values()
@@ -319,16 +296,12 @@ class App(QWidget):
         except:
             self.error_message("You cannot save empty values!", "Warning")
 
-
-
-
     def error_message(self, text, title):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
         msg.setText(text)
         msg.setWindowTitle(title)
         msg.exec_()
-
 
     def encrypt_button_clicked(self):
         print("Encrypt button clicked")
@@ -343,18 +316,121 @@ class App(QWidget):
 
             self.output_textEdit.setText(str(encrypted))  # set value to output lineEdit
 
+            print(f"ENCRYPTION\n"
+                  f"ot = {ot}\n"
+                  f"ot_blocks = {ot_blocks}\n"
+                  f"ot_blocks_num = {ot_blocks_num}\n"
+                  f"ot_blocks_binary = {ot_blocks_binary}\n"
+                  f"ot_binary_string = {ot_binary_string}\n"
+                  f"binary_string_len = {len(ot_binary_string)}\n"
+                  f"encrypted = {encrypted}")
+
 
         except:
             self.error_message("You need to generate, load or enter valid values!", "Warning --> wrong values")
 
+    def ct_int_to_binary_string(self, ct):
+        binary_string = bin(ct)
+        binary_string = binary_string[2:]
+        binary_string = "000" + binary_string  # maybe??
+        return binary_string
 
+    def binary_string_to_blocks(self, binary_string):
+        block_len = 10
+        binary_string_len = len(binary_string)
+        binary_blocks = []
 
+        # default matrix length
+        matrix_n = binary_string_len // block_len
+
+        # if characters cannot fit in, add one more list
+        if binary_string_len % block_len > 0:
+            matrix_n = matrix_n + 1
+
+        # create 2D list
+        binary_blocks = []
+        for x in range(0, matrix_n):
+            binary_blocks.append([])
+
+        # split string by 10
+        split_input = []
+        for x in range(0, binary_string_len, block_len):
+            split_input.append(binary_string[x:x + block_len])
+
+        # fill matrix
+        list_index_count = 0
+        for word in split_input:
+            for character in word:
+                binary_blocks[list_index_count].append(character)
+            list_index_count += 1
+
+        return binary_blocks, matrix_n
+
+    def binary_to_numbers(self, binary_blocks, matrix_n):
+        print(binary_blocks)
+        binary_string = ""
+
+        # create matrix
+        ct_blocks_numbers = []
+        for x in range(0, matrix_n):
+            ct_blocks_numbers.append([])
+
+        list_index_count = 0
+        for block in binary_blocks:
+            for x in block:
+                binary_string += x
+            num = int(binary_string, 2)
+            ct_blocks_numbers[list_index_count].append(num)
+            binary_string = ""
+            list_index_count += 1
+
+        return ct_blocks_numbers
+
+    def numbers_to_characters(self, number_blocks, matrix_n):
+        # create matrix
+        ct_blocks_characters = []
+        for x in range(0, matrix_n):
+            ct_blocks_characters.append([])
+
+        # fill matrix with characters
+        list_index_count = 0
+        for block in number_blocks:
+            for num in block:
+                ct_blocks_characters[list_index_count].append(chr(num))
+            list_index_count += 1
+
+        return ct_blocks_characters
+
+    def character_blocks_to_ot(self, ct_characters_blocks):
+        ot = ""
+        for block in ct_characters_blocks:
+            for character in block:
+                ot += character
+
+        return ot
 
 
     def decrypt_button_clicked(self):
         print("Decrypt button clicked")
+        _, _, n, _, _, d = self.get_all_values()
+        ct = int(self.input_textEdit.toPlainText())
+        ct = pow(ct, d, n)
+        ct_binary_string = self.ct_int_to_binary_string(ct)
+        ct_binary_blocks, matrix_n = self.binary_string_to_blocks(ct_binary_string)
+        ct_numbers_blocks = self.binary_to_numbers(ct_binary_blocks, matrix_n)
+        ct_characters_blocks = self.numbers_to_characters(ct_numbers_blocks, matrix_n)
+        ot = self.character_blocks_to_ot(ct_characters_blocks)
 
+        print(f"DECRYPTION\n"
+              f"ct = {ct}\n"
+              f"ct_binary_string = {ct_binary_string}\n"
+              f"binary_string_len = {len(ct_binary_string)}\n"
+              f"ct_binary_blocks = {ct_binary_blocks}\n"
+              f"ct_numbers_blocks = {ct_numbers_blocks}\n"
+              f"ct_characters_blocks = {ct_characters_blocks}\n"
+              f"ot = {ot}")
 
+        self.output_textEdit.setText(ot)
 
 
 if __name__ == "__main__":
