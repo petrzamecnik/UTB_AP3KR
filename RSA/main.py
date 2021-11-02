@@ -6,6 +6,10 @@ from PyQt5.QtCore import *
 import sys
 import json
 
+# TODO: polish ui
+# TODO: check for bugs / check inputs
+# TODO: add functionality to entry values
+# TODO: add functionality to clear values
 
 class App(QWidget):
     def __init__(self):
@@ -14,12 +18,12 @@ class App(QWidget):
         self.resize(width, height)
 
         # crete widgets
-        self.p_label = QLabel("p value --> ")
-        self.q_label = QLabel("q value --> ")
-        self.n_label = QLabel("n value --> ")
+        self.p_label = QLabel("p value     --> ")
+        self.q_label = QLabel("q value     --> ")
+        self.n_label = QLabel("n value     --> ")
         self.phi_label = QLabel("phi value --> ")
-        self.e_label = QLabel("e value --> ")
-        self.d_label = QLabel("d value --> ")
+        self.e_label = QLabel("e value     --> ")
+        self.d_label = QLabel("d value     --> ")
         self.p_lineEdit = QLineEdit()
         self.q_lineEdit = QLineEdit()
         self.n_lineEdit = QLineEdit()
@@ -38,7 +42,7 @@ class App(QWidget):
         # edit widgets
         self.input_textEdit.setPlaceholderText("Input ...")
         self.output_textEdit.setPlaceholderText("Output ...")
-        self.input_textEdit.setText("Ahoj Pepo")
+        self.input_textEdit.setText("")
         self.p_lineEdit.setReadOnly(True)
         self.q_lineEdit.setReadOnly(True)
         self.n_lineEdit.setReadOnly(True)
@@ -412,30 +416,40 @@ class App(QWidget):
 
     def decrypt_button_clicked(self):
         print("Decrypt button clicked")
-        _, _, n, _, _, d = self.get_all_values()
-        ct = int(self.input_textEdit.toPlainText())
-        ct = pow(ct, d, n)
-        ct_binary_string = self.ct_int_to_binary_string(ct)
-        ct_binary_blocks, matrix_n = self.binary_string_to_blocks(ct_binary_string)
-        ct_numbers_blocks = self.binary_to_numbers(ct_binary_blocks, matrix_n)
-        ct_characters_blocks = self.numbers_to_characters(ct_numbers_blocks, matrix_n)
-        ot = self.character_blocks_to_ot(ct_characters_blocks)
+        try:
+            _, _, n, _, _, d = self.get_all_values()
+            ct = int(self.input_textEdit.toPlainText())
+            ct = pow(ct, d, n)
+            ct_binary_string = self.ct_int_to_binary_string(ct)
+            ct_binary_blocks, matrix_n = self.binary_string_to_blocks(ct_binary_string)
+            ct_numbers_blocks = self.binary_to_numbers(ct_binary_blocks, matrix_n)
+            ct_characters_blocks = self.numbers_to_characters(ct_numbers_blocks, matrix_n)
+            ot = self.character_blocks_to_ot(ct_characters_blocks)
 
-        print(f"DECRYPTION\n"
-              f"ct = {ct}\n"
-              f"ct_binary_string = {ct_binary_string}\n"
-              f"binary_string_len = {len(ct_binary_string)}\n"
-              f"ct_binary_blocks = {ct_binary_blocks}\n"
-              f"ct_numbers_blocks = {ct_numbers_blocks}\n"
-              f"ct_characters_blocks = {ct_characters_blocks}\n"
-              f"ot = {ot}")
+            self.output_textEdit.setText(ot)
 
-        self.output_textEdit.setText(ot)
+            print(f"DECRYPTION\n"
+                  f"ct = {ct}\n"
+                  f"ct_binary_string = {ct_binary_string}\n"
+                  f"binary_string_len = {len(ct_binary_string)}\n"
+                  f"ct_binary_blocks = {ct_binary_blocks}\n"
+                  f"ct_numbers_blocks = {ct_numbers_blocks}\n"
+                  f"ct_characters_blocks = {ct_characters_blocks}\n"
+                  f"ot = {ot}")
+
+
+
+        except:
+            self.error_message("Only integers are allowed for decryption!", "Have a nice day!")
+            pass
+
+
+
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = App()
     window.show()
-    window.setWindowTitle("RSA masterpiece")
+    window.setWindowTitle(" app.title.set -> RSA ")
     sys.exit(app.exec())
