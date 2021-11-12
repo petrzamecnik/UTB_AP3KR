@@ -1,15 +1,13 @@
+from posixpath import split
 import random
-import Cryptodome.Util.number
+import Cryptodome.Util.number as cn
 import PyQt5.QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import sys
-import json
+import re
 
-# TODO: polish ui
-# TODO: check for bugs / check inputs
-# TODO: add functionality to entry values
-# TODO: add functionality to clear values
+
 
 class App(QWidget):
     def __init__(self):
@@ -42,19 +40,20 @@ class App(QWidget):
         # edit widgets
         self.input_textEdit.setPlaceholderText("Input ...")
         self.output_textEdit.setPlaceholderText("Output ...")
-        self.input_textEdit.setText("")
+
+
         self.p_lineEdit.setReadOnly(True)
         self.q_lineEdit.setReadOnly(True)
         self.n_lineEdit.setReadOnly(True)
         self.phi_lineEdit.setReadOnly(True)
         self.e_lineEdit.setReadOnly(True)
         self.d_lineEdit.setReadOnly(True)
-        self.generate_values_button.clicked.connect(self.generate_values_button_clicked)
-        self.enter_values_button.clicked.connect(self.enter_values_button_clicked)
-        self.load_values_button.clicked.connect(self.load_values_button_clicked)
-        self.save_values_button.clicked.connect(self.save_values_button_clicked)
-        self.encrypt_button.clicked.connect(self.encrypt_button_clicked)
-        self.decrypt_button.clicked.connect(self.decrypt_button_clicked)
+        self.generate_values_button.clicked.connect(self.generate_values)
+        # self.enter_values_button.clicked.connect(self.enter_values_button_clicked)
+        self.load_values_button.clicked.connect(self.load_values)
+        self.save_values_button.clicked.connect(self.save_values)
+        self.encrypt_button.clicked.connect(self.encrypt)
+        self.decrypt_button.clicked.connect(self.decrypt)
 
         # create layouts
         self.h_layout_main = QHBoxLayout()
@@ -105,125 +104,36 @@ class App(QWidget):
 
         self.setLayout(self.h_layout_main)
 
-    @staticmethod
-    def generate_pq_values():
-        p = Cryptodome.Util.number.getPrime(60)
-        q = Cryptodome.Util.number.getPrime(60)
-        return p, q
+    def error_message(self, text, title):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setText(text)
+        msg.setWindowTitle(title)
+        msg.exec_()
 
-    @staticmethod
-    def calculate_n_value(p, q):
-        return p * q
+    def generate_values(self):
+        p = cn.getPrime(60)
+        q = cn.getPrime(60)
+        n = p * q
+        phi = (p - 1) * (q - 1)
+        e = cn.getPrime(random.randint(40, 59))
+        d = pow(e, -1, phi)
 
-    @staticmethod
-    def calculate_phi_n(p, q):
-        return (p - 1) * (q - 1)
+        self.p_lineEdit.setText(str(p))
+        self.q_lineEdit.setText(str(q))
+        self.n_lineEdit.setText(str(n))
+        self.phi_lineEdit.setText(str(phi))
+        self.e_lineEdit.setText(str(e))
+        self.d_lineEdit.setText(str(d))
 
-    @staticmethod
-    def calculate_e(phi):
-        e = Cryptodome.Util.number.getPrime(random.randint(30, 50))
+        # check if e value is okay
+        if cn.GCD(e, phi) == 1 and 1 < e < phi:
+            print("Generation OK")
 
-        if Cryptodome.Util.number.GCD(e, phi) == 1 and 1 < e < phi:
-            return e
         else:
-            print("Something went terribly wrong !!!")
-
-    @staticmethod
-    def calculate_d(e, phi):
-        return pow(e, -1, phi)
-
-    @staticmethod
-    def input_to_blocks(input_):
-        block_len = 5
-        input_len = len(input_)
-        # default matrix length
-        matrix_n = input_len // block_len
-
-        # if characters cannot fit in, add one more list
-        if input_len % block_len > 0:
-            matrix_n = matrix_n + 1
-
-        # create 2D list
-        ot_blocks = []
-        for x in range(0, matrix_n):
-            ot_blocks.append([])
-
-        # split string by 5
-        split_input = []
-        for x in range(0, input_len, block_len):
-            split_input.append(input_[x:x + block_len])
-
-        # fill matrix with characters
-        list_index_count = 0
-        for word in split_input:
-            for character in word:
-                ot_blocks[list_index_count].append(character)
-            list_index_count += 1
-
-        # print(f"ot_blocks --> {ot_blocks}")
-        # print(f"split string --> {split_input}")
-        # print(f"matrix n --> {matrix_n}")
-        # print(f"ot_blocks --> {ot_blocks}")
-
-        return ot_blocks, matrix_n
-
-    @staticmethod
-    def characters_to_numbers(ot_blocks, matrix_n):
-        # create matrix
-        ot_blocks_numbers = []
-        for x in range(0, matrix_n):
-            ot_blocks_numbers.append([])
-
-        # fill matrix with characters as numbers
-        list_index_count = 0
-        for word in ot_blocks:
-            for character in word:
-                ot_blocks_numbers[list_index_count].append(ord(character))
-            list_index_count += 1
-
-        return ot_blocks_numbers
-
-    @staticmethod
-    def numbers_to_binary(ot_blocks_numbers, matrix_n):
-        # create matrix
-        ot_blocks_binary = []
-        for x in range(0, matrix_n):
-            ot_blocks_binary.append([])
-
-        # fill matrix with binary
-        list_index_count = 0
-        for block in ot_blocks_numbers:
-            for num in block:
-                ot_blocks_binary[list_index_count].append(f"{num:010b}")
-            list_index_count += 1
-
-        return ot_blocks_binary
-
-    @staticmethod
-    def binary_blocks_to_binary_string(ot_blocks_binary):
-        binary_string = ""
-
-        for block in ot_blocks_binary:
-            for x in block:
-                binary_string += x
-
-        return binary_string
-
-    def encrypt(self, binary_string):
-        _, _, n, _, e, _ = self.get_all_values()  # p q n phi e d
-        ot_int = int(binary_string, 2)
-        ct = pow(ot_int, e, n)
-        return ct
-
-
+            print("Unable to generate valid values, try again.")
 
     def get_all_values(self):
-        # p, q = self.generate_pq_values()
-        # n = self.calculate_n_value(p, q)
-        # phi = self.calculate_phi_n(p, q)
-        # e = self.calculate_e(phi)
-        # d = self.calculate_d(e, phi)
-
         p = int(self.p_lineEdit.text())
         q = int(self.q_lineEdit.text())
         n = int(self.n_lineEdit.text())
@@ -233,29 +143,35 @@ class App(QWidget):
 
         return p, q, n, phi, e, d
 
-    def generate_values_button_clicked(self):
-        print("generate values button clicked")
+    def save_values(self):
+        print("save values button clicked")
 
-        # fill line edits with values
-        p, q = self.generate_pq_values()
-        n = self.calculate_n_value(p, q)
-        phi = self.calculate_phi_n(p, q)
-        e = self.calculate_e(phi)
-        d = self.calculate_d(e, phi)
+        try:
+            p, q, n, phi, e, d = self.get_all_values()
+            data = [
+                str(p),
+                ",",
+                str(q),
+                ",",
+                str(n),
+                ",",
+                str(phi),
+                ",",
+                str(e),
+                ",",
+                str(d),
+            ]
 
-        # fill line edits with values
-        self.p_lineEdit.setText(str(p))
-        self.q_lineEdit.setText(str(q))
-        self.n_lineEdit.setText(str(n))
-        self.phi_lineEdit.setText(str(phi))
-        self.e_lineEdit.setText(str(e))
-        self.d_lineEdit.setText(str(d))
+            # save file
+            filename, _ = QFileDialog.getSaveFileName()
+            if filename:
+                with open(filename, "w") as f:
+                    f.writelines(data)
 
-    def enter_values_button_clicked(self):
-        print("enter values button clicked")
-        pass
+        except:
+            self.error_message("You cannot save empty values!", "Warning")
 
-    def load_values_button_clicked(self):
+    def load_values(self):
         print("load values button clicked")
         data = ""
 
@@ -284,172 +200,148 @@ class App(QWidget):
         except:
             self.error_message("Unable to load file!", "Warning")
 
-    def save_values_button_clicked(self):
-        print("save values button clicked")
-
+    def encrypt(self):
         try:
-            p, q, n, phi, e, d = self.get_all_values()
-            data = [str(p), ",", str(q), ",", str(n), ",", str(phi), ",", str(e), ",", str(d)]
-
-            # save file
-            filename, _ = QFileDialog.getSaveFileName()
-            if filename:
-                with open(filename, "w") as f:
-                    f.writelines(data)
-
-        except:
-            self.error_message("You cannot save empty values!", "Warning")
-
-    def error_message(self, text, title):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
-        msg.setText(text)
-        msg.setWindowTitle(title)
-        msg.exec_()
-
-    def encrypt_button_clicked(self):
-        print("Encrypt button clicked")
-
-        try:
+            _, _, n, _, e, _ = self.get_all_values()
             ot = self.input_textEdit.toPlainText()
-            ot_blocks, matrix_n = self.input_to_blocks(ot)  # change input string to list of characters in blocks of 5
-            ot_blocks_num = self.characters_to_numbers(ot_blocks, matrix_n)  # change letters to numbers
-            ot_blocks_binary = self.numbers_to_binary(ot_blocks_num, matrix_n)  # change numbers to binary
-            ot_binary_string = self.binary_blocks_to_binary_string(ot_blocks_binary)  # concatenate to one string
-            encrypted = self.encrypt(ot_binary_string)  # encrypt binary string to big, bad integer
-
-            self.output_textEdit.setText(str(encrypted))  # set value to output lineEdit
-
-            print(f"ENCRYPTION\n"
-                  f"ot = {ot}\n"
-                  f"ot_blocks = {ot_blocks}\n"
-                  f"ot_blocks_num = {ot_blocks_num}\n"
-                  f"ot_blocks_binary = {ot_blocks_binary}\n"
-                  f"ot_binary_string = {ot_binary_string}\n"
-                  f"binary_string_len = {len(ot_binary_string)}\n"
-                  f"encrypted = {encrypted}")
+            block_size = 5
+            bin_block_large_size = 50
 
 
-        except:
-            self.error_message("You need to generate, load or enter valid values!", "Warning --> wrong values")
+            # split input string into blocks of size 5
+            ot_blocks = [ot[i : i + block_size] for i in range(0, len(ot), block_size)]
+            ot_nums = []
+            ot_bin_blocks = []
+            bin_string_50 = ""
+            ot_bin_blocks_large = []
+            ct = ""
 
-    def ct_int_to_binary_string(self, ct):
-        binary_string = bin(ct)
-        binary_string = binary_string[2:]
-        binary_string = "000" + binary_string  # maybe??
-        return binary_string
+            # for each block of open text, change characters to numbers and append to array
+            for block in ot_blocks:
+                for char in block:
+                    ot_nums.append(ord(char))
 
-    def binary_string_to_blocks(self, binary_string):
-        block_len = 10
-        binary_string_len = len(binary_string)
-        binary_blocks = []
+            # for each num, generate binary number with pre-pended zeros to match blocks of 10bits
+            for num in ot_nums:
+                bin_num = ""
+                bin_num = "0" * (10 - len(bin(num)[2:])) + bin(num)[2:]
+                ot_bin_blocks.append(bin_num)
 
-        # default matrix length
-        matrix_n = binary_string_len // block_len
+            ot_bin_blocks = [ot_bin_blocks[i:i + block_size] for i in range(0, len(ot_bin_blocks), block_size)]
 
-        # if characters cannot fit in, add one more list
-        if binary_string_len % block_len > 0:
-            matrix_n = matrix_n + 1
+            # for each character in ot_bin_blocks blocks, concat into single string
+            for block in ot_bin_blocks:
+                bin_string_50 = ""
+                for bin_string_10 in block:
+                    bin_string_50 += bin_string_10
+    
+                ot_bin_blocks_large.append(str("0" * (50 - len(bin_string_50)) + bin_string_50))
+                
 
-        # create 2D list
-        binary_blocks = []
-        for x in range(0, matrix_n):
-            binary_blocks.append([])
-
-        # split string by 10
-        split_input = []
-        for x in range(0, binary_string_len, block_len):
-            split_input.append(binary_string[x:x + block_len])
-
-        # fill matrix
-        list_index_count = 0
-        for word in split_input:
-            for character in word:
-                binary_blocks[list_index_count].append(character)
-            list_index_count += 1
-
-        return binary_blocks, matrix_n
-
-    def binary_to_numbers(self, binary_blocks, matrix_n):
-        print(binary_blocks)
-        binary_string = ""
-
-        # create matrix
-        ct_blocks_numbers = []
-        for x in range(0, matrix_n):
-            ct_blocks_numbers.append([])
-
-        list_index_count = 0
-        for block in binary_blocks:
-            for x in block:
-                binary_string += x
-            num = int(binary_string, 2)
-            ct_blocks_numbers[list_index_count].append(num)
-            binary_string = ""
-            list_index_count += 1
-
-        return ct_blocks_numbers
-
-    def numbers_to_characters(self, number_blocks, matrix_n):
-        # create matrix
-        ct_blocks_characters = []
-        for x in range(0, matrix_n):
-            ct_blocks_characters.append([])
-
-        # fill matrix with characters
-        list_index_count = 0
-        for block in number_blocks:
-            for num in block:
-                ct_blocks_characters[list_index_count].append(chr(num))
-            list_index_count += 1
-
-        return ct_blocks_characters
-
-    def character_blocks_to_ot(self, ct_characters_blocks):
-        ot = ""
-        for block in ct_characters_blocks:
-            for character in block:
-                ot += character
-
-        return ot
+            
+            for block in ot_bin_blocks_large:
+                ct += str(pow(int(block, 2), e, n)) + " "
 
 
-    def decrypt_button_clicked(self):
-        print("Decrypt button clicked")
-        try:
-            _, _, n, _, _, d = self.get_all_values()
-            ct = int(self.input_textEdit.toPlainText())
-            ct = pow(ct, d, n)
-            ct_binary_string = self.ct_int_to_binary_string(ct)
-            ct_binary_blocks, matrix_n = self.binary_string_to_blocks(ct_binary_string)
-            ct_numbers_blocks = self.binary_to_numbers(ct_binary_blocks, matrix_n)
-            ct_characters_blocks = self.numbers_to_characters(ct_numbers_blocks, matrix_n)
-            ot = self.character_blocks_to_ot(ct_characters_blocks)
+            self.output_textEdit.setText(ct)
 
-            self.output_textEdit.setText(ot)
+            
+            # TBBDC --> The Big Bag Debugging Code
 
-            print(f"DECRYPTION\n"
-                  f"ct = {ct}\n"
-                  f"ct_binary_string = {ct_binary_string}\n"
-                  f"binary_string_len = {len(ct_binary_string)}\n"
-                  f"ct_binary_blocks = {ct_binary_blocks}\n"
-                  f"ct_numbers_blocks = {ct_numbers_blocks}\n"
-                  f"ct_characters_blocks = {ct_characters_blocks}\n"
-                  f"ot = {ot}")
-
+            print(f"n --> {n} \n" f"e --> {e}")
+            print(f"ot: {ot}")
+            print(f"ot blocks = {ot_blocks}")
+            print(f"ot nums = {ot_nums}")
+            print(f"ot bin blocks = {ot_bin_blocks}")
+            print(f"ot bin blocks large = {ot_bin_blocks_large}")
+            print(f"ct = {ct}")
 
 
         except:
-            self.error_message("Only integers are allowed for decryption!", "Have a nice day!")
+            self.error_message("Was not able to encrypt message.", "Error !")
             pass
 
+    def decrypt(self):
+        _, _, n, _, _, d = self.get_all_values()
+        ct = self.input_textEdit.toPlainText()
+        ct = ct.strip()
+        ct_blocks = ct.split(" ")
+        ct_blocks_encrypted = []
+        ct_blocks_binary_large = []
+        ct_blocks_binary = []
+        ct_nums = []
+        ot = ""
+
+        # decrypt values
+        for block in ct_blocks:
+            ct_blocks_encrypted.append(pow(int(block), d, n))
+
+        # change numbers to binary blocks
+        for block in ct_blocks_encrypted:
+            ct_bin_large = ""
+            ct_blocks_binary_large.append(str("0" * (50 - len(bin(block)[2:])) + bin(block)[2:]))
+            
+
+        # ct_blocks_binary = [ot[i : i + block_size] for i in range(0, len(ot), block_size)]
+        for block in ct_blocks_binary_large:
+            ct_blocks_binary.append([block[i : i + 10] for i in range(0, len(block), 10)])
+             
+        # change binary number into integer
+        for block in ct_blocks_binary:
+            for bin_num in block:
+                ct_nums.append(int(bin_num, 2))
+
+        # change integers to characters, then append to open text
+        for num in ct_nums:
+            if num != 0:
+                ot += chr(num)
+
+        self.output_textEdit.setText(str(ot))
+        # self.output_textEdit.setText("Ahoj pepo, jak se dneska máš ty zmetku?")
+
+        
+
+
+        print(f"ct = {ct}")
+        print(f"ct blocks = {ct_blocks}")
+        print(f"ct blocks encrypted = {ct_blocks_encrypted}")
+        print(f"ct blocks binary large = {ct_blocks_binary_large}")
+        print(f"ct blocks binary = {ct_blocks_binary}")
+        print(f"ct numbs = {ct_nums}")
+        print(f"ot = {ot}")
+
+    
 
 
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
     window = App()
     window.show()
-    window.setWindowTitle(" app.title.set -> RSA ")
+    window.setWindowTitle("RSA")
     sys.exit(app.exec())
+
+
+"""
+
+
+            # for each character in ot_bin_blocks blocks, concat into single string
+            # for block in ot_bin_blocks:
+            #     for char in block:
+            #         ot_bin_blocks_large += char
+
+            # split binary string into blocks of size 10
+            # ot_bin_blocks_blocks = [ot_bin_blocks_large[i:i+ block_size] for i in range(0, len(ot_bin_blocks_large),  block_size)]
+
+            #
+            # for block in ot_bin_blocks_blocks:
+            #     num = int(block, 2)
+            #     print(num)
+            #     encrypted_num = pow(num, e, n)
+            #     print(encrypted_num)
+            #     ct += (str(encrypted_num) + " ")
+            #     print(ct)
+
+"""
