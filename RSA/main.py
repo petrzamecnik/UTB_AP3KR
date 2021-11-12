@@ -13,8 +13,9 @@ import re
 class App(QWidget):
     def __init__(self):
         super(App, self).__init__()
-        width, height = 860, 600
+        width, height = 860, 520
         self.resize(width, height)
+        self.setObjectName("mainWidget")
 
         # crete widgets
         self.p_label = QLabel("p value     --> ")
@@ -43,12 +44,12 @@ class App(QWidget):
         self.output_textEdit.setPlaceholderText("Output ...")
 
 
-        self.p_lineEdit.setReadOnly(True)
-        self.q_lineEdit.setReadOnly(True)
-        self.n_lineEdit.setReadOnly(True)
-        self.phi_lineEdit.setReadOnly(True)
-        self.e_lineEdit.setReadOnly(True)
-        self.d_lineEdit.setReadOnly(True)
+        # self.p_lineEdit.setReadOnly(True)
+        # self.q_lineEdit.setReadOnly(True)
+        # self.n_lineEdit.setReadOnly(True)
+        # self.phi_lineEdit.setReadOnly(True)
+        # self.e_lineEdit.setReadOnly(True)
+        # self.d_lineEdit.setReadOnly(True)
         self.generate_values_button.clicked.connect(self.generate_values)
         # self.enter_values_button.clicked.connect(self.enter_values_button_clicked)
         self.load_values_button.clicked.connect(self.load_values)
@@ -68,6 +69,10 @@ class App(QWidget):
         self.d_layout = QHBoxLayout()
         self.buttons_layout = QVBoxLayout()
         self.encrypt_decrypt_layout = QHBoxLayout()
+
+        # edit layouts
+        self.buttons_layout.setObjectName("buttonsLayout")
+
 
         # setup layouts
         self.h_layout_main.addLayout(self.v_layout_left)
@@ -97,7 +102,7 @@ class App(QWidget):
         self.d_layout.addWidget(self.d_label)
         self.d_layout.addWidget(self.d_lineEdit)
         self.buttons_layout.addWidget(self.generate_values_button)
-        self.buttons_layout.addWidget(self.enter_values_button)
+        # self.buttons_layout.addWidget(self.enter_values_button)
         self.buttons_layout.addWidget(self.load_values_button)
         self.buttons_layout.addWidget(self.save_values_button)
         self.encrypt_decrypt_layout.addWidget(self.encrypt_button)
@@ -330,6 +335,15 @@ class App(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+
+    try:
+        qss = "./RSA/stylesheet.qss"
+
+        with open(qss,"r") as fh:
+            app.setStyleSheet(fh.read())
+    except:
+        pass
+
     window = App()
     window.show()
     window.setWindowTitle("RSA")
