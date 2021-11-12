@@ -1,3 +1,4 @@
+from os import error
 from posixpath import split
 import random
 import Cryptodome.Util.number as cn
@@ -83,14 +84,14 @@ class App(QWidget):
         # add widgets to layouts
         self.v_layout_left.addWidget(self.input_textEdit)
         self.v_layout_left.addWidget(self.output_textEdit)
-        self.p_layout.addWidget(self.p_label)
-        self.p_layout.addWidget(self.p_lineEdit)
-        self.q_layout.addWidget(self.q_label)
-        self.q_layout.addWidget(self.q_lineEdit)
+        # self.p_layout.addWidget(self.p_label)
+        # self.p_layout.addWidget(self.p_lineEdit)
+        # self.q_layout.addWidget(self.q_label)
+        # self.q_layout.addWidget(self.q_lineEdit)
         self.n_layout.addWidget(self.n_label)
         self.n_layout.addWidget(self.n_lineEdit)
-        self.phi_layout.addWidget(self.phi_label)
-        self.phi_layout.addWidget(self.phi_lineEdit)
+        # self.phi_layout.addWidget(self.phi_label)
+        # self.phi_layout.addWidget(self.phi_lineEdit)
         self.e_layout.addWidget(self.e_label)
         self.e_layout.addWidget(self.e_lineEdit)
         self.d_layout.addWidget(self.d_label)
@@ -134,14 +135,19 @@ class App(QWidget):
             print("Unable to generate valid values, try again.")
 
     def get_all_values(self):
-        p = int(self.p_lineEdit.text())
-        q = int(self.q_lineEdit.text())
-        n = int(self.n_lineEdit.text())
-        phi = int(self.phi_lineEdit.text())
-        e = int(self.e_lineEdit.text())
-        d = int(self.d_lineEdit.text())
+        try:
+            p = int(self.p_lineEdit.text())
+            q = int(self.q_lineEdit.text())
+            n = int(self.n_lineEdit.text())
+            phi = int(self.phi_lineEdit.text())
+            e = int(self.e_lineEdit.text())
+            d = int(self.d_lineEdit.text())
 
-        return p, q, n, phi, e, d
+            return p, q, n, phi, e, d
+
+        except:
+            # self.error_message("Unable to load values.", "Error.")
+            pass
 
     def save_values(self):
         print("save values button clicked")
@@ -248,13 +254,13 @@ class App(QWidget):
             
             # TBBDC --> The Big Bag Debugging Code
 
-            print(f"n --> {n} \n" f"e --> {e}")
-            print(f"ot: {ot}")
-            print(f"ot blocks = {ot_blocks}")
-            print(f"ot nums = {ot_nums}")
-            print(f"ot bin blocks = {ot_bin_blocks}")
-            print(f"ot bin blocks large = {ot_bin_blocks_large}")
-            print(f"ct = {ct}")
+            # print(f"n --> {n} \n" f"e --> {e}")
+            # print(f"ot: {ot}")
+            # print(f"ot blocks = {ot_blocks}")
+            # print(f"ot nums = {ot_nums}")
+            # print(f"ot bin blocks = {ot_bin_blocks}")
+            # print(f"ot bin blocks large = {ot_bin_blocks_large}")
+            # print(f"ct = {ct}")
 
 
         except:
@@ -262,53 +268,59 @@ class App(QWidget):
             pass
 
     def decrypt(self):
-        _, _, n, _, _, d = self.get_all_values()
         ct = self.input_textEdit.toPlainText()
-        ct = ct.strip()
-        ct_blocks = ct.split(" ")
-        ct_blocks_encrypted = []
-        ct_blocks_binary_large = []
-        ct_blocks_binary = []
-        ct_nums = []
-        ot = ""
-
-        # decrypt values
-        for block in ct_blocks:
-            ct_blocks_encrypted.append(pow(int(block), d, n))
-
-        # change numbers to binary blocks
-        for block in ct_blocks_encrypted:
-            ct_bin_large = ""
-            ct_blocks_binary_large.append(str("0" * (50 - len(bin(block)[2:])) + bin(block)[2:]))
-            
-
-        # ct_blocks_binary = [ot[i : i + block_size] for i in range(0, len(ot), block_size)]
-        for block in ct_blocks_binary_large:
-            ct_blocks_binary.append([block[i : i + 10] for i in range(0, len(block), 10)])
-             
-        # change binary number into integer
-        for block in ct_blocks_binary:
-            for bin_num in block:
-                ct_nums.append(int(bin_num, 2))
-
-        # change integers to characters, then append to open text
-        for num in ct_nums:
-            if num != 0:
-                ot += chr(num)
-
-        self.output_textEdit.setText(str(ot))
-        # self.output_textEdit.setText("Ahoj pepo, jak se dneska máš ty zmetku?")
+        p = q = n = phi = e = d = 0
 
         
+        try:
+            _, _, n, _, _, d = self.get_all_values()
+            ct = self.input_textEdit.toPlainText()
+            ct = ct.strip()
+            ct_blocks = ct.split(" ")
+            ct_blocks_encrypted = []
+            ct_blocks_binary_large = []
+            ct_blocks_binary = []
+            ct_nums = []
+            ot = ""
+
+                # decrypt values
+            for block in ct_blocks:
+                ct_blocks_encrypted.append(pow(int(block), d, n))
+
+            # change numbers to binary blocks
+            for block in ct_blocks_encrypted:
+                ct_bin_large = ""
+                ct_blocks_binary_large.append(str("0" * (50 - len(bin(block)[2:])) + bin(block)[2:]))
+                
+
+            # ct_blocks_binary = [ot[i : i + block_size] for i in range(0, len(ot), block_size)]
+            for block in ct_blocks_binary_large:
+                ct_blocks_binary.append([block[i : i + 10] for i in range(0, len(block), 10)])
+                
+            # change binary number into integer
+            for block in ct_blocks_binary:
+                for bin_num in block:
+                    ct_nums.append(int(bin_num, 2))
+
+            # change integers to characters, then append to open text
+            for num in ct_nums:
+                if num != 0:
+                    ot += chr(num)
+
+            self.output_textEdit.setText(str(ot))
+
+        except:
+            self.error_message("Unable to load cipher text or values for decryption.", "Error.")
+            pass
 
 
-        print(f"ct = {ct}")
-        print(f"ct blocks = {ct_blocks}")
-        print(f"ct blocks encrypted = {ct_blocks_encrypted}")
-        print(f"ct blocks binary large = {ct_blocks_binary_large}")
-        print(f"ct blocks binary = {ct_blocks_binary}")
-        print(f"ct numbs = {ct_nums}")
-        print(f"ot = {ot}")
+        # print(f"ct = {ct}")
+        # print(f"ct blocks = {ct_blocks}")
+        # print(f"ct blocks encrypted = {ct_blocks_encrypted}")
+        # print(f"ct blocks binary large = {ct_blocks_binary_large}")
+        # print(f"ct blocks binary = {ct_blocks_binary}")
+        # print(f"ct numbs = {ct_nums}")
+        # print(f"ot = {ot}")
 
     
 
@@ -323,25 +335,3 @@ if __name__ == "__main__":
     window.setWindowTitle("RSA")
     sys.exit(app.exec())
 
-
-"""
-
-
-            # for each character in ot_bin_blocks blocks, concat into single string
-            # for block in ot_bin_blocks:
-            #     for char in block:
-            #         ot_bin_blocks_large += char
-
-            # split binary string into blocks of size 10
-            # ot_bin_blocks_blocks = [ot_bin_blocks_large[i:i+ block_size] for i in range(0, len(ot_bin_blocks_large),  block_size)]
-
-            #
-            # for block in ot_bin_blocks_blocks:
-            #     num = int(block, 2)
-            #     print(num)
-            #     encrypted_num = pow(num, e, n)
-            #     print(encrypted_num)
-            #     ct += (str(encrypted_num) + " ")
-            #     print(ct)
-
-"""
