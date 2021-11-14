@@ -1,53 +1,52 @@
-
-
-QWidget#mainWidget{
-  background-color: #3f3f3f;
+QWidget#mainWidget {
+  background-color: #121212;
 }
 
-QPushButton{
-  background-color: #242424;
-  width: 80%;
-  /* color: rgb(255, 166, 0); */
-  color: #00BAFF;
+QPushButton {
+  background-color: #333333;
+  color: #ff8c00;
   font-size: larger;
   font-weight: bold;
   border-radius: 8px;
   padding: 5px;
-  
+  margin-left: 30px;
+  margin-right: 30px;
+  margin-top: 6px;
+  min-height: 25%;
 }
 
-QPushButton:hover{
-  background-color: #1f1f1f;
+QPushButton:hover {
+  /* background-color: #1f1f1f; */
+  background-color: #272727;
+  border-bottom: 2px solid #ff8c00;
 }
 
 
-
-QTextEdit{
-  background-color: #242424;
-  color: whitesmoke;
+QTextEdit {
+  background-color: #333333;
+  color: white;
+  border-bottom: 2px solid #ff8c00;
   border-radius: 8px;
-  
 }
 
-
-QLineEdit{
+QLineEdit {
   margin-right: 10%;
-  padding: 3px;
-  color: whitesmoke;
-  background-color: #242424;
+  padding: 4px;
+  color: white;
+  background-color: #333333;
+  border-radius: 6px;
 }
 
-QLabel{
+QLabel {
   /* color: #00BAFF; */
-  color: #00BAFF;
+  color: #ff8c00;
   margin-left: 10%;
   font-weight: bold;
   font-size: larger;
 }
 
-QLayout#buttonsLayout{
-  max-width: 80%;
+
+QMessageBox{
+  background-color: #121212;
+  color: white;
 }
-
-
-

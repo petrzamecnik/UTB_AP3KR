@@ -1,13 +1,14 @@
-from os import error
-from posixpath import split
+import sys
+import re
+import pathlib
 import random
 import Cryptodome.Util.number as cn
 import PyQt5.QtWidgets
+from posixpath import split
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-import sys
-import re
-
 
 
 class App(QWidget):
@@ -20,10 +21,10 @@ class App(QWidget):
         # crete widgets
         self.p_label = QLabel("p value     --> ")
         self.q_label = QLabel("q value     --> ")
-        self.n_label = QLabel("n value     --> ")
+        self.n_label = QLabel("Value   N     --> ")
         self.phi_label = QLabel("phi value --> ")
-        self.e_label = QLabel("e value     --> ")
-        self.d_label = QLabel("d value     --> ")
+        self.e_label = QLabel("Value   E     --> ")
+        self.d_label = QLabel("Value   D    --> ")
         self.p_lineEdit = QLineEdit()
         self.q_lineEdit = QLineEdit()
         self.n_lineEdit = QLineEdit()
@@ -33,11 +34,11 @@ class App(QWidget):
         self.input_textEdit = QTextEdit()
         self.output_textEdit = QTextEdit()
         self.generate_values_button = QPushButton("Generate Values")
-        self.enter_values_button = QPushButton("Enter Values")
         self.load_values_button = QPushButton("Load Values")
         self.save_values_button = QPushButton("Save Values")
         self.encrypt_button = QPushButton("Encrypt")
         self.decrypt_button = QPushButton("Decrypt")
+        
 
         # edit widgets
         self.input_textEdit.setPlaceholderText("Input ...")
@@ -51,11 +52,16 @@ class App(QWidget):
         # self.e_lineEdit.setReadOnly(True)
         # self.d_lineEdit.setReadOnly(True)
         self.generate_values_button.clicked.connect(self.generate_values)
-        # self.enter_values_button.clicked.connect(self.enter_values_button_clicked)
         self.load_values_button.clicked.connect(self.load_values)
         self.save_values_button.clicked.connect(self.save_values)
         self.encrypt_button.clicked.connect(self.encrypt)
         self.decrypt_button.clicked.connect(self.decrypt)
+        self.encrypt_button.setObjectName("button-encrypt")
+        self.decrypt_button.setObjectName("button-decrypt")
+
+        """
+        asd
+        """
 
         # create layouts
         self.h_layout_main = QHBoxLayout()
@@ -131,6 +137,7 @@ class App(QWidget):
         self.phi_lineEdit.setText(str(phi))
         self.e_lineEdit.setText(str(e))
         self.d_lineEdit.setText(str(d))
+        
 
         # check if e value is okay
         if cn.GCD(e, phi) == 1 and 1 < e < phi:
@@ -213,11 +220,10 @@ class App(QWidget):
 
     def encrypt(self):
         try:
-            _, _, n, _, e, _ = self.get_all_values()
+            n = int(self.n_lineEdit.text())
+            e = int(self.e_lineEdit.text())
             ot = self.input_textEdit.toPlainText()
             block_size = 5
-            bin_block_large_size = 50
-
 
             # split input string into blocks of size 5
             ot_blocks = [ot[i : i + block_size] for i in range(0, len(ot), block_size)]
@@ -256,9 +262,6 @@ class App(QWidget):
 
             self.output_textEdit.setText(ct)
 
-            
-            # TBBDC --> The Big Bag Debugging Code
-
             # print(f"n --> {n} \n" f"e --> {e}")
             # print(f"ot: {ot}")
             # print(f"ot blocks = {ot_blocks}")
@@ -272,13 +275,10 @@ class App(QWidget):
             self.error_message("Was not able to encrypt message.", "Error !")
             pass
 
-    def decrypt(self):
-        ct = self.input_textEdit.toPlainText()
-        p = q = n = phi = e = d = 0
-
-        
+    def decrypt(self):       
         try:
-            _, _, n, _, _, d = self.get_all_values()
+            n = int(self.n_lineEdit.text())
+            d = int(self.d_lineEdit.text())
             ct = self.input_textEdit.toPlainText()
             ct = ct.strip()
             ct_blocks = ct.split(" ")
@@ -313,9 +313,10 @@ class App(QWidget):
                     ot += chr(num)
 
             self.output_textEdit.setText(str(ot))
+            
 
         except:
-            self.error_message("Unable to load cipher text or values for decryption.", "Error.")
+            self.error_message("Was not able to decrypt message.", "Error !")
             pass
 
 
@@ -330,18 +331,35 @@ class App(QWidget):
     
 
 
-
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")
+    dir = pathlib.Path.cwd()
+    files = list(dir.glob("**/*"))
+    stylesheet_path = ""
 
+    # check files in project
+    for file in files:
+        file_name = str(file)
+
+        # if qss file is found, then try to load it
+        if file_name.endswith(".qss"):
+            stylesheet_path = file
+            print(file)
+
+        # if qss is not found, look for css and try to load it
+        elif file_name.endswith(".css"):
+            stylesheet_path = file
+            print("Unable to locate PyQt Stylesheet, trying to load css")
+
+
+    # try to load found file as stylesheet, else load the default style
     try:
-        qss = "./RSA/stylesheet.qss"
+        with open(stylesheet_path, "r") as file_:
+            app.setStyleSheet(file_.read())
+        print("Stylesheet loaded successfuly!")
 
-        with open(qss,"r") as fh:
-            app.setStyleSheet(fh.read())
     except:
+        print("Unable to load stylesheet, loading default.")
         pass
 
     window = App()
