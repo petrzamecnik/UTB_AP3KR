@@ -1,4 +1,5 @@
-from os import path
+# imports
+import os
 import sys
 import pathlib
 import re
@@ -15,13 +16,36 @@ stylesheet_global = ""
 
 class Data:
     def __init__(self):
-        self.image_path = ""
+        self.img_path = ""
+        self.img_ext = ""
+        self.width = 0
+        self.height = 0
+        self.px_total = 0
+        self.size_B = 0
+        self.size_KB = 0
+        self.size_MB = 0
 
     def update_img_path(self, path):
-        self.image_path = path
+        self.img_path = path
+
+    def update_img_data(self, w, h, px, ext, size):
+        self.width = w
+        self.height = h
+        self.px_total = px
+        self.img_ext = ext
+        self.size_B = size
+
+        self.size_KB = size / 1000
+        self.size_MB = size / 1000000
+
 
     def return_img_path(self):
-        return self.image_path
+        return self.img_path
+
+    def return_img_data(self):
+        data_list = (self.img_path, self.img_ext, self.width, self.height, self.px_total, self.size_B, self.size_KB, self.size_MB)
+        
+        return data_list
 
 
 class ImageLabel(QLabel):
@@ -243,6 +267,7 @@ class App(QWidget):
                         break
                     elif path.endswith(ext):
                         Data.update_img_path(self, path)
+                        self.get_img_props()
                         self.set_image(file_path)
                         self.img_output.setPixmap(QPixmap(file_path))
                         e.accept()
@@ -278,6 +303,7 @@ class App(QWidget):
                     break
                 elif path.endswith(ext):
                     Data.update_img_path(self, path)
+                    self.get_img_props()
                     self.lbl_image_input.setPixmap(QPixmap(path))
                     break
 
@@ -292,6 +318,47 @@ class App(QWidget):
 
     def get_img_props(self):
         img_path = Data.return_img_path(self)
+        ext = pathlib.Path(img_path).suffix
+        width, height = Image.open(img_path).size
+        px_count = width * height
+        size = os.stat(img_path).st_size
+
+        Data.update_img_data(self, width, height, px_count, ext, size)
+        self.enter_values()
+
+        print(f"img path: {img_path}")
+        print(f"img ext: {ext}")
+        print(f"px: [{width} X {height}] --> {px_count}px in total")
+        print(f"size: {size}B")
+
+    def enter_values(self):
+        img_data = Data.return_img_data(self) # [path, ext, width, height, px_total, size_B, size_KB, size_MB ]
+
+        # print(img_data)
+
+        path = img_data[0]
+        ext = img_data[1]
+        width = img_data[2]
+        height = img_data[3]
+        px_total = img_data[4]
+        size_B = img_data[5]
+        size_KB = img_data[6]
+        size_MB = img_data[7]
+
+        print(path)
+        print(ext)
+        print(width)
+        print(height)
+        print(px_total)
+        print(size_B)
+        print(size_KB)
+        print(size_MB)
+
+
+        self.ledit_px1.setText(f"[{img_data[2]} X {img_data[3]} --> {img_data[4]}px total]")
+        self.ledit_ext1.setText(str(img_data[1]))
+        self.ledit_path1.setText(img_data[0])
+        self.ledit_size1.setText(f"{img_data[6]} KB")
         
 
 
