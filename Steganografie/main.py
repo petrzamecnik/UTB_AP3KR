@@ -12,7 +12,7 @@ from PIL import Image
 from PIL.ImageQt import ImageQt
 import numpy
 import time
-
+import math
 
 stylesheet_global = ""
 
@@ -20,6 +20,7 @@ stylesheet_global = ""
 class Data:
     def __init__(self):
         self.img_path = ""
+        self.img_written_path = ""
         self.img_ext = ""
         self.width = 0
         self.height = 0
@@ -27,6 +28,7 @@ class Data:
         self.size_B = 0
         self.size_KB = 0
         self.size_MB = 0
+        self.img = None
 
     def update_img_path(self, path):
         self.img_path = path
@@ -37,7 +39,6 @@ class Data:
         self.px_total = px
         self.img_ext = ext
         self.size_B = size
-
         self.size_KB = size / 1000
         self.size_MB = size / 1000000
 
@@ -47,8 +48,14 @@ class Data:
 
     def return_img_data(self):
         data_list = (self.img_path, self.img_ext, self.width, self.height, self.px_total, self.size_B, self.size_KB, self.size_MB)
-        
         return data_list
+
+    def update_written_img(self, path, img):
+        self.img_written_path = path
+        self.img = img
+
+    def return_written_img(self):
+        return self.img
 
 
 class ImageLabel(QLabel):
@@ -142,10 +149,10 @@ class App(QWidget):
         self.btn_save.clicked.connect(self.save_img)
         self.btn_encrypt.clicked.connect(self.encrypt)
         self.btn_decrypt.clicked.connect(self.decrypt)
-        self.wid_container1.setMinimumWidth(300)
-        self.wid_container1.setMaximumWidth(350)
-        self.wid_container2.setMinimumWidth(300)
-        self.wid_container2.setMaximumWidth(350)
+        self.wid_container1.setMinimumWidth(400)
+        self.wid_container1.setMaximumWidth(450)
+        self.wid_container2.setMinimumWidth(400)
+        self.wid_container2.setMaximumWidth(450)
 
         # create layouts
         self.h_layout_main = QHBoxLayout()
@@ -311,12 +318,28 @@ class App(QWidget):
                     break
 
     def save_img(self):
-        print(Data.return_img_path(self))
+        try:
+            viable_extensions = [".png", ".bmp", ".tif", ".tiff", ".raw", ".cr2"]
+            img = None
+            img = Data.return_written_img(self)
+            ext = Data.return_img_data(self)[1]
+            file_name, _ = QFileDialog.getSaveFileName()
+
+            for x in viable_extensions:
+                if not (file_name.endswith(x)):
+                    file_name = file_name + ext
+                    pic = img
+                    pic = pic.save(file_name)
+                    break 
+                elif file_name.endswith(x):
+                    pic = img
+                    pic = pic.save(file_name)
+                    break
+        except:
+            pass
+
 
     def encrypt(self):
-        pass
-
-    def decrypt(self):
         pass
 
     def get_img_props(self):
@@ -366,46 +389,76 @@ class App(QWidget):
     def encrypt(self):
         start = time.time()
         img = Image.new("RGB", (3, 3), color="white")
-        width, height = img.size
+        # img = None
+        # try:
+        img_path = Data.return_img_path(self)
+        #     img = Image.open(img_path)
+        # except:
+        #     pass
 
-        cnt = 0
-        txt = "A" # input message text
-        txt_bin_lst = []
-        txt_bin = ""
+        if img:
+            width, height = img.size
 
-        for char in txt:
-            char_num = ord(char)
-            char_bin = bin(char_num)[2:]
-            txt_bin += char_bin
-            txt_bin_lst.append(char_bin)
+            cnt = 0
+            # txt = "Ahoj pepo jak se máš?" # input message text
+            txt = self.tedit_input.toPlainText()
+            txt_bin_lst = []
+            txt_bin = ""
 
-        print(f"list of text as binary: {txt_bin_lst}")
-        print(f"binary text: {txt_bin}")
-        
+            for char in txt:
+                char_num = ord(char)
+                char_bin = bin(char_num)[2:]
+                txt_bin += char_bin
+                txt_bin_lst.append(char_bin)
 
-        # write img
-        i = 0
-        for x in range(0, width):
-            for y in range(0, height):
-                pixel = list(img.getpixel((x, y)))
-                for subpixel in range(0,3):
-                    if(i < len(txt_bin)):
-                        # "&" stands for bitwise AND, "~" stands for bitwise negation
-                        pixel[subpixel] = pixel[subpixel] & ~1 | int(txt_bin[i])  
-                        i+=1
-                img.putpixel((x,y), tuple(pixel))
+            print(f"list of text as binary: {txt_bin_lst}")
+            print(f"binary text: {txt_bin}")
 
-        for w in range(0, width):
-            for h in range(0, height):
-                print(img.getpixel((w, h)))
+            # check if text can fit into image
+            max_size = width * height * 3
+            txt_size = len(txt_bin)
+            print(f"Max size: {max_size}b")
+            print(f"Size of text: {txt_size}b")
 
 
-
+            # null image ??
 
 
 
-        end = time.time()
-        print(f"Time to encrypt image: {end - start}")
+            # write image
+            if txt_size < max_size:
+                # write img
+                i = 0
+                for x in range(0, width):
+                    for y in range(0, height):
+                        pixel = list(img.getpixel((x, y)))
+                        for subpixel in range(0,3):
+                            if(i < len(txt_bin)):
+                                # "&" stands for bitwise AND, "~" stands for bitwise negation
+                                pixel[subpixel] = pixel[subpixel] & ~1 | int(txt_bin[i])  
+                                i+=1
+                        img.putpixel((x,y), tuple(pixel))
+
+                for w in range(0, width):
+                    for h in range(0, height):
+                        print(img.getpixel((w, h)))
+
+                qimg = ImageQt(img)
+                self.img_output.setPixmap(QPixmap.fromImage(qimg))
+                Data.update_written_img(self, img_path, img)
+
+            else:
+                self.error_msg("Input is too big for this image!", "Warning!")
+
+            end = time.time()
+            print(f"Time to encrypt image: {end - start}")
+
+
+        else:
+                self.error_msg("Unable to find image!", "Warning!")
+            
+    def decrypt(self):
+        pass
 
 
 

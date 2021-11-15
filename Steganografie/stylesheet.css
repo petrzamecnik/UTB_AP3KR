@@ -1,0 +1,72 @@
+/* ORANGE: ff8c0 0  */
+
+QWidget#mainWidget {
+  background-color: #121212;
+}
+
+QPushButton {
+  background-color: #333333;
+  color: #2ab9ff;
+  font-size: larger;
+  font-weight: bold;
+  border-radius: 8px;
+  padding: 5px;
+  min-height: 25%;
+  /* margin-left: 5%;
+  margin-right: 5%; */
+  /* margin-top: 3%; */
+}
+
+QPushButton:hover {
+  /* background-color: #1f1f1f; */
+  background-color: #272727;
+  border-bottom: 2px solid #2ab9ff;
+}
+
+
+QTextEdit {
+  background-color: #333333;
+  color: white;
+  border-bottom: 2px solid #2ab9ff;
+  border-radius: 8px;
+  margin-top: 20%;
+  /* margin-left: 5%;
+  margin-right: 5%; */
+}
+
+
+QLineEdit {
+  margin: 5%;
+  padding: 4px;
+  color: white;
+  background-color: #333333;
+  border-radius: 6px;
+  border-right: 2px solid #2ab9ff;
+}
+
+QLabel {
+  color: #2ab9ff;
+  margin: 5%;
+  font-size: 16px;
+  
+}
+
+QLabel#image {
+  border: 3px solid #2ab9ff;
+  margin: 5px;
+  margin-left: 15%;
+  color: #2ab9ff;
+}
+
+QLabel#proplabel {
+  color: #2ab9ff;
+  /* font-weight: bold; */
+  font-size: 24px;
+  
+}
+
+
+
+QMessageBox{
+  background-color: #ffffff;
+}
