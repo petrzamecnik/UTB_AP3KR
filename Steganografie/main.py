@@ -122,6 +122,7 @@ class App(QWidget):
 
         self.tedit_input.setPlaceholderText("Input ...")
 
+
         # self.img_input.setPixmap(self.pixmap_input)
         # self.img_input.setMaximumSize(400, 400)
         # self.img_input.setScaledContents(True)
@@ -139,10 +140,10 @@ class App(QWidget):
         self.btn_save.clicked.connect(self.save_img)
         self.btn_encrypt.clicked.connect(self.encrypt)
         self.btn_decrypt.clicked.connect(self.decrypt)
-        self.wid_container1.setMinimumWidth(300)
-        self.wid_container1.setMaximumWidth(350)
-        self.wid_container2.setMinimumWidth(300)
-        self.wid_container2.setMaximumWidth(350)
+        self.wid_container1.setMinimumWidth(400)
+        # self.wid_container1.setMaximumWidth(350)
+        self.wid_container2.setMinimumWidth(400)
+        # self.wid_container2.setMaximumWidth(350)
 
         # create layouts
         self.h_layout_main = QHBoxLayout()
