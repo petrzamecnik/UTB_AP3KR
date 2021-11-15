@@ -13,6 +13,17 @@ from PIL.ImageQt import ImageQt
 stylesheet_global = ""
 
 
+class Data:
+    def __init__(self):
+        self.image_path = ""
+
+    def update_img_path(self, path):
+        self.image_path = path
+
+    def return_img_path(self):
+        return self.image_path
+
+
 class ImageLabel(QLabel):
     def __init__(self):
         super().__init__()
@@ -21,28 +32,29 @@ class ImageLabel(QLabel):
         self.setPixmap(QPixmap(400, 400))
         self.setMaximumSize(400, 400)
         self.setScaledContents(True)
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QLabel{
                 border: 3px solid #2ab9ff;
                 margin: 5px;
                 margin-left: 15%;
                 color: #2ab9ff;
             }
-        """)
-
+        """
+        )
 
     def setPixmap(self, image):
         super().setPixmap(image)
 
 
-
 class App(QWidget):
     def __init__(self):
         super(App, self).__init__()
-        width, height = 1080, 860
+        width, height = 1400, 860
         self.resize(width, height)
         self.setObjectName("mainWidget")
         self.setAcceptDrops(True)
+        self.setMaximumSize(1400, 900)
         # empty_img = Image.new(mode="RGB", size=(100, 100), color=(255, 255, 255))
         # empty_img.save("white_image.png")
         # empty_img = ImageQt(empty_img)
@@ -53,14 +65,14 @@ class App(QWidget):
         self.lbl_image_input = ImageLabel()
         self.img_output = QLabel()
         self.lbl_prop = QLabel("Image Properties")
-        self.lbl_px1 = QLabel("Pixels")
+        self.lbl_px1 = QLabel("Pixels       ")
         self.lbl_ext1 = QLabel("Extension")
-        self.lbl_path1 = QLabel("Path")
-        self.lbl_size1 = QLabel("Size")
-        self.lbl_px2 = QLabel("Pixels")
+        self.lbl_path1 = QLabel("Path         ")
+        self.lbl_size1 = QLabel("Size         ")
+        self.lbl_px2 = QLabel("Pixels       ")
         self.lbl_ext2 = QLabel("Extension")
-        self.lbl_path2 = QLabel("Path")
-        self.lbl_size2 = QLabel("Size")
+        self.lbl_path2 = QLabel("Path         ")
+        self.lbl_size2 = QLabel("Size         ")
         self.wid_container1 = QWidget()
         self.wid_container2 = QWidget()
 
@@ -94,6 +106,7 @@ class App(QWidget):
         self.img_output.setPixmap(self.pixmap_output)
         self.img_output.setMaximumSize(400, 400)
         self.img_output.setScaledContents(True)
+        # self.img_output.setObjectName("image")
         # self.img_output.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self.img_output.setObjectName("image")
         self.tedit_input.setMaximumWidth(400)
@@ -102,10 +115,10 @@ class App(QWidget):
         self.btn_save.clicked.connect(self.save_img)
         self.btn_encrypt.clicked.connect(self.encrypt)
         self.btn_decrypt.clicked.connect(self.decrypt)
-        self.wid_container1.setMinimumWidth(350)
-        self.wid_container1.setMaximumWidth(450)
-        self.wid_container2.setMinimumWidth(350)
-        self.wid_container2.setMaximumWidth(450)
+        self.wid_container1.setMinimumWidth(300)
+        self.wid_container1.setMaximumWidth(350)
+        self.wid_container2.setMinimumWidth(300)
+        self.wid_container2.setMaximumWidth(350)
 
         # create layouts
         self.h_layout_main = QHBoxLayout()
@@ -168,13 +181,13 @@ class App(QWidget):
             self.img_output, alignment=Qt.AlignmentFlag.AlignCenter
         )
 
-        self.layout_info_px_1.addWidget(self.lbl_px1, Qt.AlignmentFlag.AlignCenter)
+        self.layout_info_px_1.addWidget(self.lbl_px1)
         self.layout_info_px_1.addWidget(self.ledit_px1)
-        self.layout_info_ext_1.addWidget(self.lbl_ext1, Qt.AlignmentFlag.AlignCenter)
+        self.layout_info_ext_1.addWidget(self.lbl_ext1)
         self.layout_info_ext_1.addWidget(self.ledit_ext1)
-        self.layout_info_path_1.addWidget(self.lbl_path1, Qt.AlignmentFlag.AlignCenter)
+        self.layout_info_path_1.addWidget(self.lbl_path1)
         self.layout_info_path_1.addWidget(self.ledit_path1)
-        self.layout_info_size1.addWidget(self.lbl_size1, Qt.AlignmentFlag.AlignCenter)
+        self.layout_info_size1.addWidget(self.lbl_size1)
         self.layout_info_size1.addWidget(self.ledit_size1)
 
         self.layout_info_px_2.addWidget(self.lbl_px2)
@@ -197,13 +210,11 @@ class App(QWidget):
 
         self.setLayout(self.h_layout_main)
 
-
     def dragEnterEvent(self, e):
         if e.mimeData().hasImage:
             e.accept()
         else:
             e.ignore()
-        
 
     def dragMoveEvent(self, e):
         if e.mimeData().hasImage:
@@ -231,21 +242,17 @@ class App(QWidget):
                         )
                         break
                     elif path.endswith(ext):
+                        Data.update_img_path(self, path)
                         self.set_image(file_path)
                         self.img_output.setPixmap(QPixmap(file_path))
                         e.accept()
                         break
-            
-            
 
         else:
             e.ignore()
 
-
-
     def set_image(self, file_path):
         self.lbl_image_input.setPixmap(QPixmap(file_path))
-
 
     def error_msg(self, text, title):
         msg = QMessageBox()
@@ -270,11 +277,12 @@ class App(QWidget):
                     )
                     break
                 elif path.endswith(ext):
-                    self.img_input.setPixmap(QPixmap(path))
+                    Data.update_img_path(self, path)
+                    self.lbl_image_input.setPixmap(QPixmap(path))
                     break
 
     def save_img(self):
-        pass
+        print(Data.return_img_path(self))
 
     def encrypt(self):
         pass
@@ -283,7 +291,8 @@ class App(QWidget):
         pass
 
     def get_img_props(self):
-        pass
+        img_path = Data.return_img_path(self)
+        
 
 
 if __name__ == "__main__":
