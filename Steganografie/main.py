@@ -3,12 +3,15 @@ import os
 import sys
 import pathlib
 import re
+import PIL
 from PyQt5 import *
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QColor, QDragEnterEvent, QPixmap
 from PyQt5.QtWidgets import *
 from PIL import Image
 from PIL.ImageQt import ImageQt
+import numpy
+import time
 
 
 stylesheet_global = ""
@@ -122,7 +125,6 @@ class App(QWidget):
 
         self.tedit_input.setPlaceholderText("Input ...")
 
-
         # self.img_input.setPixmap(self.pixmap_input)
         # self.img_input.setMaximumSize(400, 400)
         # self.img_input.setScaledContents(True)
@@ -140,10 +142,10 @@ class App(QWidget):
         self.btn_save.clicked.connect(self.save_img)
         self.btn_encrypt.clicked.connect(self.encrypt)
         self.btn_decrypt.clicked.connect(self.decrypt)
-        self.wid_container1.setMinimumWidth(400)
-        # self.wid_container1.setMaximumWidth(350)
-        self.wid_container2.setMinimumWidth(400)
-        # self.wid_container2.setMaximumWidth(350)
+        self.wid_container1.setMinimumWidth(300)
+        self.wid_container1.setMaximumWidth(350)
+        self.wid_container2.setMinimumWidth(300)
+        self.wid_container2.setMaximumWidth(350)
 
         # create layouts
         self.h_layout_main = QHBoxLayout()
@@ -361,6 +363,52 @@ class App(QWidget):
         self.ledit_path1.setText(img_data[0])
         self.ledit_size1.setText(f"{img_data[6]} KB")
         
+    def encrypt(self):
+        start = time.time()
+        img = Image.new("RGB", (3, 3), color="white")
+        width, height = img.size
+
+        cnt = 0
+        txt = "A" # input message text
+        txt_bin_lst = []
+        txt_bin = ""
+
+        for char in txt:
+            char_num = ord(char)
+            char_bin = bin(char_num)[2:]
+            txt_bin += char_bin
+            txt_bin_lst.append(char_bin)
+
+        print(f"list of text as binary: {txt_bin_lst}")
+        print(f"binary text: {txt_bin}")
+        
+
+        # write img
+        i = 0
+        for x in range(0, width):
+            for y in range(0, height):
+                pixel = list(img.getpixel((x, y)))
+                for subpixel in range(0,3):
+                    if(i < len(txt_bin)):
+                        # "&" stands for bitwise AND, "~" stands for bitwise negation
+                        pixel[subpixel] = pixel[subpixel] & ~1 | int(txt_bin[i])  
+                        i+=1
+                img.putpixel((x,y), tuple(pixel))
+
+        for w in range(0, width):
+            for h in range(0, height):
+                print(img.getpixel((w, h)))
+
+
+
+
+
+
+        end = time.time()
+        print(f"Time to encrypt image: {end - start}")
+
+
+
 
 
 if __name__ == "__main__":
@@ -397,5 +445,5 @@ if __name__ == "__main__":
 
     window = App()
     window.show()
-    window.setWindowTitle("RSA")
+    window.setWindowTitle("Steganography")
     sys.exit(app.exec())
